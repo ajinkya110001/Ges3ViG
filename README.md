@@ -133,7 +133,7 @@ Note: ImputeRefer dataset requires the [ScanNet v2](http://www.scan-net.org/) da
     ```
 3. Augment the information by running the following command in the project root"
     ```shell
-    python dataset/scannetv2/preprocess_all_imputed_data_add_scans.py +split={split}
+    python dataset/scannetv2/combine_data.py +split={split}
     ```
     This should populate the folders `{split}_imputed` with the relevant `.pth` files
 
