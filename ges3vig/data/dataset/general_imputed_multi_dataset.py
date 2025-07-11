@@ -24,38 +24,38 @@ class GeneralMultiImputedDataset(Dataset):
         reflect_trans[0,0] = -1
         reflect_trans3 = np.eye(3)
         reflect_trans3[0,0] = -1
-
         base_num = 11470
         for human_type in tqdm(os.listdir(human_path)):
             mesh_files_dir = f"{human_path}/{human_type}/meshes"
             joints_files_dir = f"{human_path}/{human_type}/joints"
 
             human_type_dict = {}
-            for filename in os.listdir(mesh_files_dir):
-                human_pose_name = filename.split(".")[0]
+            for angle in range(20,150,10):
+                for filename in os.listdir(f"{mesh_files_dir}/{angle}"):
+                    human_pose_name = filename.split(".")[0]
 
-                human_mesh_left = o3d.io.read_triangle_mesh(f"{mesh_files_dir}/{filename}")
-                human_mesh_right = o3d.geometry.TriangleMesh(human_mesh_left)
-                human_mesh_right.transform(reflect_trans)
+                    human_mesh_left = o3d.io.read_triangle_mesh(f"{mesh_files_dir}/{angle}/{filename}")
+                    human_mesh_right = o3d.geometry.TriangleMesh(human_mesh_left)
+                    human_mesh_right.transform(reflect_trans)
 
-                with open(os.path.join(f"{joints_files_dir}/{human_pose_name}.pkl"), 'rb') as f:
-                    human_joints_left = pickle.load(f)
+                    with open(os.path.join(f"{joints_files_dir}/{angle}/{human_pose_name}.pkl"), 'rb') as f:
+                        human_joints_left = pickle.load(f)
 
-                human_joints_right = {}
+                    human_joints_right = {}
 
-                for key in human_joints_left:
-                    if "right" in key:
-                        human_joints_right[key.replace("right", "left")] = reflect_trans3@human_joints_left[key]
-                    elif "left" in key:
-                        human_joints_right[key.replace("left","right")] = reflect_trans3@human_joints_left[key]
-                    else:
-                        human_joints_right[key] = reflect_trans3@human_joints_left[key]
-                human_type_dict[human_pose_name] = {
-                                                        "left_mesh": human_mesh_left,
-                                                        "joints_left": human_joints_left,
-                                                        "right_mesh": human_mesh_right,
-                                                        "joints_right": human_joints_right,
-                                                    }
+                    for key in human_joints_left:
+                        if "right" in key:
+                            human_joints_right[key.replace("right", "left")] = reflect_trans3@human_joints_left[key]
+                        elif "left" in key:
+                            human_joints_right[key.replace("left","right")] = reflect_trans3@human_joints_left[key]
+                        else:
+                            human_joints_right[key] = reflect_trans3@human_joints_left[key]
+                    human_type_dict[human_pose_name] = {
+                                                            "left_mesh": human_mesh_left,
+                                                            "joints_left": human_joints_left,
+                                                            "right_mesh": human_mesh_right,
+                                                            "joints_right": human_joints_right,
+                                                        }
                 #if base_num!=len(np.asarray(human_mesh_left.vertices)):
                 #    print(len(np.asarray(human_mesh_left.vertices)))
             self.human_data[human_type] = human_type_dict
