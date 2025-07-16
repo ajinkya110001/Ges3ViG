@@ -31,8 +31,13 @@ class GeneralMultiImputedDataset(Dataset):
 
             human_type_dict = {}
             for angle in range(20,150,10):
+                num_files = sum(1 for f in os.listdir(f"{mesh_files_dir}/{angle}") if os.path.isfile(os.path.join(f"{mesh_files_dir}/{angle}", f)))
+                num=random.randint(0,num_files-1)
                 for filename in os.listdir(f"{mesh_files_dir}/{angle}"):
                     human_pose_name = filename.split(".")[0]
+                    if(num_files>1):
+                        if (('e' in human_pose_name) != num):
+                            continue
 
                     human_mesh_left = o3d.io.read_triangle_mesh(f"{mesh_files_dir}/{angle}/{filename}")
                     human_mesh_right = o3d.geometry.TriangleMesh(human_mesh_left)
