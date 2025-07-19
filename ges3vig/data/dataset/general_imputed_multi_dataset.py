@@ -31,13 +31,8 @@ class GeneralMultiImputedDataset(Dataset):
 
             human_type_dict = {}
             for angle in range(20,150,10):
-                num_files = sum(1 for f in os.listdir(f"{mesh_files_dir}/{angle}") if os.path.isfile(os.path.join(f"{mesh_files_dir}/{angle}", f)))
-                num=random.randint(0,num_files-1)
                 for filename in os.listdir(f"{mesh_files_dir}/{angle}"):
                     human_pose_name = filename.split(".")[0]
-                    if(num_files>1):
-                        if (('e' in human_pose_name) != num):
-                            continue
 
                     human_mesh_left = o3d.io.read_triangle_mesh(f"{mesh_files_dir}/{angle}/{filename}")
                     human_mesh_right = o3d.geometry.TriangleMesh(human_mesh_left)
@@ -181,7 +176,17 @@ class GeneralMultiImputedDataset(Dataset):
             instance_id = human_dict['instance_id']
             sem_label = human_dict['sem_label']
 
-            human_joints = self.human_data[human_name][f"l_h_{int(arm_angle.item())}"][f"joints_{lr}"]
+            path=f"{self.data_cfg}/{human_name}/joints/{arm_angle}"
+            num_files = sum(1 for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)))
+            choice=-1
+            if(num_files>1):
+                choice=random.randint(0,1)
+                if(choice):
+                    human_joints = self.human_data[human_name][f"l_h_e_{int(arm_angle.item())}"][f"joints_{lr}"]
+                else:
+                    human_joints = self.human_data[human_name][f"l_h_{int(arm_angle.item())}"][f"joints_{lr}"]
+            else:
+                human_joints = self.human_data[human_name][f"l_h_{int(arm_angle.item())}"][f"joints_{lr}"]
 
             human_center_translate = torch.eye(4, dtype=torch.float64)
             human_center_translate[:3,3] = -torch.tensor(human_joints['left_shoulder'])
@@ -196,7 +201,10 @@ class GeneralMultiImputedDataset(Dataset):
             perturb_transform = (human_center_translate.inverse()@perturb_transform@human_center_translate).numpy()
             human_transform = human_transform@perturb_transform
 
-            human_mesh = o3d.geometry.TriangleMesh(self.human_data[human_name][f"l_h_{int(arm_angle.item())}"][f"{lr}_mesh"])
+            if(choice<=0):
+                human_mesh = o3d.geometry.TriangleMesh(self.human_data[human_name][f"l_h_{int(arm_angle.item())}"][f"{lr}_mesh"])
+            else:
+                human_mesh = o3d.geometry.TriangleMesh(self.human_data[human_name][f"l_h_e_{int(arm_angle.item())}"][f"{lr}_mesh"])
             human_mesh.transform(human_transform)
             human_joints_final = {}
             for name, coord in human_joints.items():
