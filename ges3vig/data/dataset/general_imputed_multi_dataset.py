@@ -178,10 +178,10 @@ class GeneralMultiImputedDataset(Dataset):
 
             path=f"{self.data_cfg}/{human_name}/joints/{arm_angle}"
             num_files = sum(1 for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)))
-            choice=-1
+            se=0
             if(num_files>1):
-                choice=random.randint(0,1)
-                if(choice):
+                se=random.randint(0,1)
+                if(se):
                     human_joints = self.human_data[human_name][f"l_h_e_{int(arm_angle.item())}"][f"joints_{lr}"]
                 else:
                     human_joints = self.human_data[human_name][f"l_h_{int(arm_angle.item())}"][f"joints_{lr}"]
@@ -201,10 +201,10 @@ class GeneralMultiImputedDataset(Dataset):
             perturb_transform = (human_center_translate.inverse()@perturb_transform@human_center_translate).numpy()
             human_transform = human_transform@perturb_transform
 
-            if(choice<=0):
-                human_mesh = o3d.geometry.TriangleMesh(self.human_data[human_name][f"l_h_{int(arm_angle.item())}"][f"{lr}_mesh"])
-            else:
+            if(se):
                 human_mesh = o3d.geometry.TriangleMesh(self.human_data[human_name][f"l_h_e_{int(arm_angle.item())}"][f"{lr}_mesh"])
+            else:
+                human_mesh = o3d.geometry.TriangleMesh(self.human_data[human_name][f"l_h_{int(arm_angle.item())}"][f"{lr}_mesh"])
             human_mesh.transform(human_transform)
             human_joints_final = {}
             for name, coord in human_joints.items():
