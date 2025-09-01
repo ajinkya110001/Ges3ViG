@@ -82,37 +82,38 @@ def get_humans(human_base):
         mesh_files_dir = f"{human_base}/{human_type}/meshes"
         joints_files_dir = f"{human_base}/{human_type}/joints"
         poses_files_dir = f"{human_base}/{human_type}/poses"
-        for fname in sorted(os.listdir(mesh_files_dir)):
-            #print(fname)
-            human_pose_name = fname.split(".")[0]
-            with open(f"{mesh_files_dir}/{fname}", "rb") as f:
-                human_mesh_left:trimesh.Trimesh = trimesh.exchange.load.load(f,"ply")
-                human_mesh_right = human_mesh_left.copy()
-                human_mesh_right = human_mesh_right.apply_transform(reflect_trans)
-            with open(f"{joints_files_dir}/{human_pose_name}.pkl","rb") as f:
-                human_joints_left = pickle.load(f)
-            vox_grid_left:trimesh.voxel.VoxelGrid = human_mesh_left.voxelized(VOXELIZATION_PITCH)
-            vox_grid_left.fill()
-            vox_grid_right:trimesh.voxel.VoxelGrid = human_mesh_right.voxelized(VOXELIZATION_PITCH)
-            vox_grid_right.fill()
-            human_joints_right = {}
+        for angle in sorted(os.listdir(mesh_files_dir)):
+            for fname in sorted(os.listdir(f"{mesh_files_dir}/{angle}")):
+                #print(fname)
+                human_pose_name = fname.split(".")[0]
+                with open(f"{mesh_files_dir}/{angle}/{fname}", "rb") as f:
+                    human_mesh_left:trimesh.Trimesh = trimesh.exchange.load.load(f,"ply")
+                    human_mesh_right = human_mesh_left.copy()
+                    human_mesh_right = human_mesh_right.apply_transform(reflect_trans)
+                with open(f"{joints_files_dir}/{angle}/{human_pose_name}.pkl","rb") as f:
+                    human_joints_left = pickle.load(f)
+                vox_grid_left:trimesh.voxel.VoxelGrid = human_mesh_left.voxelized(VOXELIZATION_PITCH)
+                vox_grid_left.fill()
+                vox_grid_right:trimesh.voxel.VoxelGrid = human_mesh_right.voxelized(VOXELIZATION_PITCH)
+                vox_grid_right.fill()
+                human_joints_right = {}
 
-            for key in human_joints_left:
-                if "right" in key:
-                    human_joints_right[key.replace("right", "left")] = reflect_trans3@human_joints_left[key]
-                elif "left" in key:
-                    human_joints_right[key.replace("left","right")] = reflect_trans3@human_joints_left[key]
-                else:
-                    human_joints_right[key] = reflect_trans3@human_joints_left[key]
+                for key in human_joints_left:
+                    if "right" in key:
+                        human_joints_right[key.replace("right", "left")] = reflect_trans3@human_joints_left[key]
+                    elif "left" in key:
+                        human_joints_right[key.replace("left","right")] = reflect_trans3@human_joints_left[key]
+                    else:
+                        human_joints_right[key] = reflect_trans3@human_joints_left[key]
 
-            human_type_list.append({
-                "left_mesh": human_mesh_left,
-                "joints_left": human_joints_left,
-                "voxel_tensor_left": TorchVoxelGrid.fromVoxels(vox_grid_left, device="cpu"),
-                "right_mesh": human_mesh_right,
-                "joints_right": human_joints_right,
-                "voxel_tensor_right": TorchVoxelGrid.fromVoxels(vox_grid_right, device="cpu"),
-            })
+                human_type_list.append({
+                    "left_mesh": human_mesh_left,
+                    "joints_left": human_joints_left,
+                    "voxel_tensor_left": TorchVoxelGrid.fromVoxels(vox_grid_left, device="cpu"),
+                    "right_mesh": human_mesh_right,
+                    "joints_right": human_joints_right,
+                    "voxel_tensor_right": TorchVoxelGrid.fromVoxels(vox_grid_right, device="cpu"),
+                })
         full_human_data[human_type] = human_type_list
     return full_human_data
 
